@@ -2129,6 +2129,11 @@ main (int argc, char *argv[])
 						UploadDocumentTestParams *test_params;
 						gchar *test_name;
 
+						/* FIXME: Resumable uploads are not implemented. */
+						if (k == UPLOAD_RESUMABLE) {
+							continue;
+						}
+
 						/* Resumable metadata-only uploads don't make sense. */
 						if (i == UPLOAD_METADATA_ONLY && k == UPLOAD_RESUMABLE) {
 							continue;
