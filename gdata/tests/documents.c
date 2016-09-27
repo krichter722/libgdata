@@ -40,6 +40,22 @@ static UhmServer *mock_server = NULL;
 #define CLIENT_SECRET "-fA4pHQJxR3zJ-FyAMPQsikg"
 #define REDIRECT_URI "urn:ietf:wg:oauth:2.0:oob"
 
+static void
+add_folder_link_to_entry (GDataDocumentsEntry *entry, GDataDocumentsFolder *folder)
+{
+	GDataLink *_link;
+	const gchar *id;
+	gchar *uri;
+
+	/* HACK: Build the GDataLink:uri from the ID by adding the prefix. */
+	id = gdata_entry_get_id (GDATA_ENTRY (folder));
+	uri = g_strconcat ("https://www.googleapis.com/drive/v2/files/", id, NULL);
+	_link = gdata_link_new (uri, GDATA_LINK_PARENT);
+	gdata_entry_add_link (GDATA_ENTRY (entry), _link);
+	g_object_unref (_link);
+	g_free (uri);
+}
+
 static gboolean
 check_document_is_in_folder (GDataDocumentsDocument *document, GDataDocumentsFolder *folder)
 {
@@ -1202,8 +1218,6 @@ set_up_folders (FoldersData *data, GDataDocumentsService *service, gboolean init
 	                                                                                    root,
 	                                                                                    NULL,
 	                                                                                    &error));
-	g_object_unref (root);
-
 	g_assert_no_error (error);
 	g_assert (GDATA_IS_DOCUMENTS_FOLDER (data->folder));
 
@@ -1216,6 +1230,10 @@ set_up_folders (FoldersData *data, GDataDocumentsService *service, gboolean init
 
 	document = gdata_documents_document_new (NULL);
 	gdata_entry_set_title (GDATA_ENTRY (document), "add_file_folder_move_text");
+	if (initially_in_folder)
+		add_folder_link_to_entry (GDATA_DOCUMENTS_ENTRY (document), root);
+
+	g_object_unref (root);
 
 	file_info = g_file_query_info (document_file, G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME "," G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE,
 	                               G_FILE_QUERY_INFO_NONE, NULL, &error);
